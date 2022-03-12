@@ -1,0 +1,24 @@
+
+#profile {
+  display: grid;
+  grid-template-columns: 400px auto;
+  grid-gap: 30px;
+}
+
+#others {
+  display: grid;
+  grid-template-columns: repeat(1fr);
+  grid-gap: 30px;
+}
+.one {
+  grid-row: 1;
+}
+
+.two {
+  grid-row: 2;
+  
+}
+
+#relation > div, #realisation > div, #also > div {
+  display: none;
+}
