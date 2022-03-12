@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html prefix="
+        dbp: http://dbpedia.org/property/
+        dbo: http://dbedia.org/ontology/
+        dct: http://purl.org/dc/terms/
+        dbd: http://dbpedia.org/datatype/
+        dbr: http://dbpedia.org/resource/
+        rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+        foaf: http://xmlns.com/foaf/0.1/
+        xsd: http://www.w3.org/2001/XMLSchema#"
+	og:  https://ogp.me/ns#
+	">
+    <head>
+        <title>Biography | The Science Lab</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link rel="stylesheet" href="../css/general.css"> 
+        <link rel="stylesheet" href="../css/scientist.css">
+        <link rel="icon" type="image/svg" href="../resources/atom-solid.svg" />
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+        <meta property="og:type" content="article"/>
+        <meta property="og:locale" content="en_GB"/>
+
+    </head>
+
+    <body>
+
+       <nav class="navbar navbar-expand-sm navbar-dark bg-dark d-flex justify-content-between">
+          <h1 class="title mt-2 mb-2">THE SCIENCE LAB</h1>
+          <a class="mr-4 btn" href="./index.html"><i class="fa fa-fw fa-home fa-lg"></i> Home </a>
+       </nav>
+
+       <a class="btn text-left ml-5 mt-5" href="./search.html">Return</a>
+       <div typeof="person" class="p-5">
+          <div id="profile">
+              <div class="photo text-center one" rel="foaf:depiction">
+                 <img id="profileImage" class="mt-2 mb-2" property="image" style="width:300px;" alt="profileImage" src="../resources/no-image-found.png"/>
+              </div>
+
+              <div id="profil" class="one">
+                 <h1 id="name" property="foaf:name" class="mt-2 "></h1>
+
+                 <p class="mr-4" id="desc" property="description">
+
+                 </p>
+              </div>
+        </div>
+        <div id="others" class="mr-5 ml-5">
+          <div id="relation" property="foaf:knows" class="two">
+            <h2>Relations</h2>
+            <div id="students" class="mt-1"><h3>Doctoral students : </h3></div>
+            <div id="advisors" class="mt-1"><h3>Doctoral advisors : </h3></div>
+            <div id="relative" class="mt-1"><h3>Relatives : </h3></div>
+            <div id="spouse" class="mt-1"><h3>Spouse : </h3></div>
+            <div id="aadvisor" class="mt-1"><h3>Academic advisors : </h3></div>
+          </div>
+
+          <div id="realisation" property="foaf:knowsFor" class="two">
+            <h2>Facts & accomplishments</h2>
+            <div id="awards" class="mt-1"><h3>Awards : </h3></div>
+            <div id="impact" class="mt-1"><h3>Known for : </h3></div>
+          </div>
+        
+          <div id="also" class="two">
+            <h2>See Also</h2>
+            <div id="influence" class="mt-1"><h3>Has influenced : </h3></div>
+            <div id="influenced" class="mt-1"><h3>Influenced by : </h3></div>
+            <div id="samefield" class="mt-1"><h3>In same fields : </h3></div>
+          </div>
+          </div>
+       </div>
+    </body>
+
+    <script>
+
+    //Liste des prédicats    
+    var propertiesProfil = ['desc','name'];
+    var propertiesField = ['field'];
+    var propertiesRelation = ['students','urlstudents','advisors','urladvisors', 'relative','urlrelative', 'spouse','urlspouse', 'aadvisor','urlaadvisor'];
+    var propertiesAchievement = ['awards', 'impact'];
+    var propertiesInfluence = ['influence','urlinfluence', 'influenced','urlinfluenced','samefield','urlsamefield'];
+
+    //Envoie request à dbpdia
+    function getInfo(request, listProperties) {
+
+            var url_base = "http://dbpedia.org/sparql";
+            var url = url_base + "?query=" + encodeURIComponent(request) + "&format=json";
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var results = JSON.parse(this.responseText).results.bindings;
+                    console.log(results);
+                    for (result of results) {
+                        loadPage(result, listProperties);
+                    }
+                }
+            };
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+    }
+        
+
+    jQuery(function ($) {
+        //Lors du chargement de la page, la requête pour obtenir les informations du scientifique est créée et envoyée
+        $(window).on('load', function () {
+
+            const urlParams = new URLSearchParams(window.location.search);
+            console.log(urlParams);
+            var name = urlParams.get("name");
+
+            var profil_request = `SELECT DISTINCT * WHERE {
+                    dbr:${name} dbo:abstract ?desc.
+                    FILTER (langMatches(lang(?desc),"EN")).
+                    OPTIONAL{
+                    {dbr:${name} rdfs:label ?name}
+                    UNION
+                    {dbr:${name} dbp:name ?name}
+                    }.
+                    FILTER (langMatches(lang(?name),"EN")).
+                    OPTIONAL{
+                        dbr:${name} dbo:thumbnail ?image
+                    }.
+                }`;
+
+            var field_request =`SELECT DISTINCT * WHERE {
+                    OPTIONAL {
+                    {dbr:${name} dbp:field ?field}
+                    UNION
+                    {dbr:${name} dbo:academicDiscipline ?field}
+                    UNION
+                    {dbr:${name} dbo:mainInterest ?field}
+                    UNION
+                    {dbr:${name} dbp:mainInterest ?field}
+                    }.
+                }`;
+
+            var spouse_request = `SELECT DISTINCT * WHERE { 
+                    OPTIONAL{
+                    {?urlspouse dbo:spouse dbr:${name}}
+                    UNION
+                    {dbr:${name} dbo:spouse ?urlspouse}
+                    ?urlspouse dbp:name ?spouse
+                    }.
+                }`;
+
+            var relative_request = `SELECT DISTINCT * WHERE { 
+                    OPTIONAL{
+                    {?urlrelative dbo:relative dbr:${name}}
+                    UNION
+                    {dbr:${name} dbo:relative ?urlrelative}
+                    ?urlrelative dbp:name ?relative
+                    }.
+                }`;
+
+            var advisor_request = `SELECT DISTINCT * WHERE {
+                    OPTIONAL {
+                    {dbr:${name} dbp:doctoralAdvisor ?urladvisors}
+                    UNION
+                    {dbr:${name} dbo:doctoralAdvisor ?urladvisors}
+                    UNION
+                    {dbr:${name} dbp:doctoralAdvisors ?urladvisors}
+                    ?urladvisors dbp:name ?advisors
+                    }.
+                }`;
+
+            var student_request = `SELECT DISTINCT * WHERE {
+                    OPTIONAL {
+                    {dbr:${name} dbp:doctoralStudents ?urlstudents}
+                    UNION
+                    {dbr:${name} dbo:doctoralStudent ?urlstudents}
+                    ?urlstudents dbp:name ?students
+                    }.
+                }`;
+
+                        
+            var aadvisor_request = `SELECT DISTINCT * WHERE {
+                    OPTIONAL{
+                    dbr:${name} dbp:academicAdvisors ?urlaadvisor.
+                    ?urlaadvisor dbp:name ?aadvisor
+                    }.
+                }`;       
+
+            var impact_request = `SELECT DISTINCT * WHERE {
+                    OPTIONAL {
+                    {dbr:${name} dbo:knownFor ?i}
+                    UNION
+                    {dbr:${name} dbr:knownFor ?i}.
+                    ?i rdfs:label ?impact.
+                    FILTER (langMatches(lang(?impact),"EN")).
+                    }.
+                }`;
+
+            var achievement_request = `SELECT DISTINCT * WHERE {
+                    OPTIONAL {
+                    {
+                    {dbr:${name} dbp:awards ?awards}
+                    UNION
+                    {dbr:${name} dbp:prizes ?awards}
+                    FILTER(isLiteral(?awards) && langMatches(lang(?awards),"EN"))
+                    }
+                    UNION
+                    {
+                    {dbr:${name} dbp:awards ?a}
+                    UNION
+                    {dbr:${name} dbp:prizes ?a}
+                    ?a rdfs:label ?awards
+                    FILTER(isLiteral(?awards) && langMatches(lang(?awards),"EN"))
+                    }
+                    }.
+                }`;
+
+            var influenced_request = `SELECT DISTINCT * WHERE {
+                    OPTIONAL{
+                    {dbr:${name} dbo:influencedBy ?urlinfluence}
+                    UNION
+                    {?urlinfluence dbo:influenced dbr:${name}}
+                    ?urlinfluence dbp:name ?influence
+                    }.
+                }`;
+
+            var influence_request = `SELECT DISTINCT * WHERE {
+                    OPTIONAL{
+                    {?urlinfluenced dbo:influencedBy dbr:${name}}
+                    UNION
+                    {dbr:${name} dbo:influenced ?urlinfluenced}
+                    ?urlinfluenced dbp:name ?influenced
+                    }.
+                }`;
+
+            var same_field_request = `SELECT DISTINCT ?urlsamefield ?samefield WHERE {
+                dbr:List_of_French_scientists dbo:wikiPageWikiLink ?urlsamefield.
+                {{?urlsamefield a dbo:Person}
+                UNION
+                {?urlsamefield a yago:Scientist110560637}
+                UNION
+                {?urlsamefield dct:subject dbc:French_scientists}}
+
+                {{dbr:${name} dbp:field ?field}
+                UNION
+                {dbr:${name} dbo:academicDiscipline ?field}}.
+
+                {{?urlsamefield dbp:field ?field}
+                UNION
+                {?urlsamefield dbo:academicDiscipline ?field}}.
+
+                ?urlsamefield dbp:name ?samefield
+
+                FILTER (?urlsamefield != dbr:${name})
+                } ORDER BY asc(?samefield) LIMIT 5`;
+
+                getInfo(profil_request,propertiesProfil);
+                getInfo(impact_request,propertiesAchievement);
+                getInfo(achievement_request,propertiesAchievement);
+                getInfo(field_request,propertiesField);
+                getInfo(relative_request,propertiesRelation);
+                getInfo(spouse_request,propertiesRelation);
+                getInfo(student_request,propertiesRelation);
+                getInfo(advisor_request,propertiesRelation);
+                getInfo(aadvisor_request,propertiesRelation);
+                getInfo(influenced_request,propertiesInfluence);
+                getInfo(influence_request,propertiesInfluence);
+                getInfo(same_field_request,propertiesInfluence);
+
+            });
+        });
+
+        
+        //Chargement de la page
+        //Si results possède une des properties de listProperties, le champ correspondant sera affiché sur la page
+        function loadPage(results, listProperties){
+
+            if(results.hasOwnProperty('image')){
+                $('#profileImage').prop('src', results.image.value);
+            }
+
+            for (const element of listProperties) {
+                var id = "#"+element;
+                if(results.hasOwnProperty(element)&&results[element].value){
+                    $(id).css('display','block');
+                    var url = 'url' + element;
+                    var atext = '<a';
+                    if(results.hasOwnProperty(url)){
+                        var hyperlink = './scientist.html?name='+results[url].value.split("http://dbpedia.org/resource/")[1];
+                        atext+=' href=\''+hyperlink+'\'';
+                    }
+                    atext+='>'+results[element].value+'</a><br>';
+                    $(id).append(atext);
+                }
+
+            };
+            
+
+
+        }
+
+    </script>
+</html>

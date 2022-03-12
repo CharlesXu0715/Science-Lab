@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> Search Results| The Science Lab</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="https://kit.fontawesome.com/d953baff23.js" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link rel="stylesheet" href="../style/css/general.css"> 
+        <link rel="stylesheet" href="../style/css/search.css"> 
+        <link rel="icon" type="image/svg" href="../style/images/atom-solid.svg" />
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    </head>
+
+    <body>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark d-flex justify-content-between">
+            <h1 class="title mt-2 mb-2">THE SCIENCE LAB</h1>
+            <a class="mr-4 btn" href="./index.html"><i class="fa fa-fw fa-home fa-lg"></i> Home </a>
+        </nav>
+
+        <div class="text-center mt-5">
+            <h1><strong>RESULTS OF YOUR RESEARCH</strong></h1>
+        </div>
+        <a class="btn text-left ml-5" href="./index.html">Return</a>
+        
+        <div class="p-5">
+            <table class="table table-striped">
+                <thead class="text-center">
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Link
+                    </th>
+                </thead>
+                <tbody id="tabBody">
+                   <div class="text-center" id="resultNull" style="display: none;" >
+                        <h2>WE COULDN'T FIND ANY SCIENTIST MATCHING YOUR CRITERIA !</h2>
+                    </div>
+                </tbody>
+            </table>
+        </div>
+
+    </body>
+
+    <script>
+        $(document).ready(function(){
+            //Si 'testObject' n'existe pas, alors il n'y a aucun scientifique correspondant à la recherche de l'utilisateur
+            var localObj = JSON.parse(localStorage.getItem('testObject'));
+            if(localObj === null || localObj.length <1) {
+                $('#resultNull').css('display','block');
+            }
+            //Pour chaque résultat de la requête, nous l'affichons dans le tableau des résultats
+            $.each(localObj, function() {
+                var resource = this.link.value.split("http://dbpedia.org/resource/");
+                var name = this.name.value.split("|");
+                $('#tabBody').append(
+                    '<tr><td>'
+                    + name[0]
+                    + '</td><td class="border-left"><a class="moreInfo" href="./scientist.html?name='
+                    + resource[1]
+                    +'">Voir plus de détails</a></tr>'
+                );
+            });
+        });
+
+    </script>
+
+</html>

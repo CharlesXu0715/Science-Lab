@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>The Science Lab</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="https://kit.fontawesome.com/d953baff23.js" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link rel="stylesheet" href="../css/general.css"> 
+        <link rel="stylesheet" href="../css/index.css">
+        <link rel="icon" type="image/svg" href="../resources/atom-solid.svg" />
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    </head>
+
+    <body style="overflow-y: auto">
+        <!-- Partie animation -->
+        <span id="splash-overlay" class="splash"></span>
+        <span id="welcome" class="z-depth-4"></span>
+
+        <div class="row d-flex justify-content-center">
+            <div id="content" class="wrapper mt-5 mb-auto">
+                <div>
+                    <div id="loader" class="spinner-border text-muted m-auto mt-5 d-flex justify-content-center"></div>
+                    <!--formulaire de recherche -->
+                    <form class="search">
+                        <h1>Looking for a French Scientist ?</h1>
+                        <h3>Click on the ball, then type your keywords.</h3>
+                        <div id="searchBar" class="mt-4 d-flex justify-content-center">
+                            <input id="searchContent" type="search" required>
+                            <button id="searchBtn" class="pl-2 pr-2 border-left-0" type="submit">Search</button>
+                            <button id="filterBtn" class="btn border-none rounded-lg ml-3" type="button" onclick="showHide('listFilter')">+ Show filters</button>
+                        </div>
+                        <!-- Liste des filtres possibles -->
+                        <table class="table">
+                            <tbody id="listFilter" class="mt-4" style="visibility: hidden;">
+                                <tr>
+                                    <td>
+                                        <button id="clearBtn" type="button" class="btn border-none rounded-lg ml-1" onclick="clearFilter()">
+                                            <i class="fa fa-trash fa-lg mr-2" aria-hidden="true"></i>Clear filters
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><input id="checkName" type="checkbox" class="form-check-input" name ="filterChbx" value="Name"></th>
+                                    <td scope="row">
+                                        <label class="form-check-label" for="checkName">Name</label>
+                                    </td>
+                                    <td scope="row">
+                                        <input id="inputName" class="filterInput" type="search" placeholder="Ex: Marie Curie" disabled required="false">  
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row"><input class="form-check-input" type="checkbox" id="checkDomain" name ="filterChbx" value="domain"></th>
+                                    <td><label class="form-check-label" for="checkDomain">Domain</label></td>
+                                    <td>
+                                        <input id="inputDomain" class="filterInput" type="search" placeholder="Ex: Mathemathics" disabled required="false">
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <th scope="row"><input class="form-check-input" type="checkbox" id="checkInvention" name ="filterChbx" value="invention"></th>
+                                    <td><label class="form-check-label" for="checkInvention">Invention</label></td>
+                                    <td>
+                                        <input id="inputInvention" class="filterInput" type="search" placeholder="Ex: Nuclear bomb" disabled required="false">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><input class="form-check-input" type="checkbox" id="checkAward" name ="filterChbx" value="prize"></th>
+                                    <td><label class="form-check-label" for="checkPrize">Prize</label></td>
+                                    <td>
+                                        <input id="inputAward" class="filterInput" type="search" placeholder="Ex: Nobel Prize" disabled required="false">
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+
+        //Après expiration, l'animation se remet en place
+        function checkExpiration() {
+           //check if past expiration date
+           var values = JSON.parse(localStorage.getItem('animation'));
+           //check "my hour" index here
+           if (values[0] < new Date()) {
+              localStorage.removeItem("animation")
+           }
+        }
+
+
+        $(document).ready(function() {
+
+            if (!window.localStorage.getItem('animation')) { //Pour que l'animation ne s'active qu'une fois
+                var myHour = new Date();
+                var now = new Date();
+                 //one hour from now
+                //console.log(myHour);
+                window.localStorage.setItem('animation', JSON.stringify(now.getHours()+1));
+                $('body').addClass("welcome");
+            }
+            else {
+                $('body').css({
+                    'background-image': 'url("../resources/image.jpeg")',
+                    'background-size': 'cover',
+                    'background-repeat': 'no-repeat',
+                    'background-position': 'center center',
+                    'background-size': '100%'
+                });
+            }
+            checkExpiration();
+            clearFilter(); //Pour décocher tous les filtres quand la page est rechargée par ex.
+        });
+
+        //Affichage de la barre de recherche
+        $('#searchContent').click(function () {
+            $('#searchContent').css({
+                'width': '450px',
+                'border-radius': '25px 0px 0px 25px',
+                'padding-left': '2%'
+            });
+            $('#searchBtn').css('visibility', 'visible');
+            $('#searchContent').attr('placeholder', 'Ex: Marie Curie');
+            $('#filterBtn').css('visibility', 'visible');
+        });
+
+        //Changement du texte pour le bouton 'Show filters' si cliqué
+        $('#filterBtn').click(function () {
+            $(this).text() === '- Hide filters' ? $(this).text('+ Show filters') : $(this).text('- Hide filters');
+        });
+
+        /*Pour activer/désactiver le input (zone de texte) correspondant à un filtre. 
+            booleanSwitchTo : true si on veut désactiver la zone (car la case à cocher correspondante n'est pas coché)
+                              false sinon
+        */
+        function reverseCheckbox(checkboxClassName, booleanSwitchTo){
+            var input = checkboxClassName.parent().siblings().children();
+            input.prop("disabled", booleanSwitchTo);
+            input.val('');
+            input.prop('required', !booleanSwitchTo);
+
+        }
+
+        //Fonction activée quand un filtre est coché/décoché
+        $(".form-check-input").on('click', (function () {
+            var input = $(this).parent().siblings().children();
+            if ($(this).prop("checked")) {
+                reverseCheckbox($(this), false);
+            } else {
+                 reverseCheckbox($(this), true);
+            }
+        }));
+
+        //Décoche tous les filtres
+        function clearFilter() {
+            $(".form-check-input").each(function () {
+                $(this).prop("checked", false);
+                reverseCheckbox($(this), true);
+            });
+        }
+
+        //Fonction pour gérer la visibilité de l'élément dont l'id est passé en paramètre
+        function showHide(elementId) {
+            if (document.getElementById(elementId).style.visibility === 'hidden') {
+                document.getElementById(elementId).style.visibility = 'visible';
+            } else {
+                document.getElementById(elementId).style.visibility = 'hidden';
+            }
+        }
+
+        //Fonction activée quand l'utilisateur a lancé la recherche en cliquant sur "Search"
+        $('.search').on('submit', rechercher);
+
+        //Fonction gérant la recherche : création, transmission de la requête vers DBPédia et rappatriement des résultats
+        function rechercher(event) {
+            event.preventDefault();
+            $('#loader').attr('style', 'display: block !important');
+            $('.search').css('opacity','0.3');
+
+            var request_domains = ""
+            if ($('#checkDomain').prop("checked")) {
+                request_domains = `{
+{?link dbp:field ?field}
+UNION
+{?link dbo:academicDiscipline ?field}
+UNION
+{?link dbo:mainInterest ?field}
+UNION
+{?link dbp:mainInterest ?field}
+}.
+
+{
+{?link dbp:field ?label}
+UNION
+{?link dbo:academicDiscipline ?label}
+UNION
+{?link dbo:mainInterest ?label}
+UNION
+{?link dbp:mainInterest ?label}
+UNION
+{?field rdfs:label ?label}
+}.
+FILTER (langMatches(lang(?label),"EN") && (${convertToRegex($('#inputDomain').val(), "label")})).`
+            }
+
+            var request_name = ""
+            if ($('#checkName').prop("checked")) {
+                request_name = `
+FILTER (langMatches(lang(?name),"EN") && (${convertToRegex($('#inputName').val(), "name")})).`
+            }
+
+            var request_inventions = ""
+            if ($('#checkInvention').prop("checked")) {
+                request_inventions = `
+{
+{?link dbo:knownFor ?impact}
+UNION
+{?link dbr:knownFor ?impact}
+}.
+{?impact rdfs:label ?labelimpact}.
+FILTER (langMatches(lang(?labelimpact),"EN") && (${convertToRegex($('#inputInvention').val(), "labelimpact")})).`
+            }
+
+            var request_award = ""
+            if ($('#checkAward').prop("checked")) {
+                request_award = `
+{
+{?link dbp:awards ?awards}
+UNION
+{?link dbp:prizes ?awards}
+FILTER(isLiteral(?awards) && langMatches(lang(?awards),"EN"))
+}
+UNION
+{
+{?link dbp:awards ?a}
+UNION
+{?link dbp:prizes ?a}
+?a rdfs:label ?awards.
+FILTER(isLiteral(?awards) && langMatches(lang(?awards),"EN"))
+}.
+FILTER (${convertToRegex($('#inputAward').val(), "awards")}).`
+
+            }
+
+            var default_requete_header = `SELECT DISTINCT ?link ?name WHERE {
+dbr:List_of_French_scientists dbo:wikiPageWikiLink ?link.
+?link dbo:abstract ?desc.
+{{?link a dbo:Person}
+UNION
+{?link a yago:Scientist110560637}
+UNION
+{?link dct:subject dbc:French_scientists}}
+FILTER (langMatches(lang(?desc),"EN")).
+OPTIONAL{
+{?link rdfs:label ?name}
+UNION
+{?link dbp:name ?name}
+}.
+FILTER (langMatches(lang(?name),"EN") && (${convertToRegex($('#searchContent').val(), "desc")})).
+${request_domains}
+${request_name}
+${request_inventions}
+${request_award}
+} ORDER BY asc(?link)`;
+
+            var url_base = "http://dbpedia.org/sparql";
+            var url = url_base + "?default-graph-uri=http%3A%2F%2Fdbpedia.org&query=" + encodeURIComponent(default_requete_header) + "&format=json&timeout=30000";
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+
+                    var results = JSON.parse(this.responseText).results.bindings;
+                    //Sauvegarde des résultats en local
+                    localStorage.setItem('testObject', JSON.stringify(results));
+
+                    //Nettoyage de la liste des filtres
+                    clearFilter();
+
+                    //Redirection vers la page d'affichage des résultats
+                    window.location.href='./search.html';
+            }
+            };
+            xmlhttp.open("GET", url, true);
+            //Envoi de la requête
+            xmlhttp.send();
+
+        }
+
+        function convertToRegex(strings, type)
+        {
+            var strings_regex = "";
+            strings.split(" ").forEach(string => {
+                strings_regex += (strings_regex === "") ? "" : " || ";
+                strings_regex += "regex(?" + type + ",\"";
+                string.split("").forEach(c => {
+                    strings_regex += "[";
+                    strings_regex += c.toUpperCase();
+                    strings_regex += c.toLowerCase();
+                    strings_regex += "]";
+                });
+                strings_regex += "\")";
+            });
+            return strings_regex;
+        }
+
+    </script>
+
+</html>
