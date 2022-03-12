@@ -1,0 +1,280 @@
+# main request
+# ?desc returns the description and ?image returns a link of an image of the scientist
+
+SELECT DISTINCT ?link WHERE {
+dbr:List_of_French_scientists dbo:wikiPageWikiLink ?link.
+?link dbo:abstract ?desc.
+{{?link a dbo:Person}
+UNION
+{?link a yago:Scientist110560637}
+UNION
+{?link dct:subject dbc:French_scientists}}
+FILTER (langMatches(lang(?desc),"EN")).
+?link dbo:thumbnail ?image
+} ORDER BY asc(?link)
+
+# return person's name. NB: dbr:Benoit_Mandelbrot has a whole paragraph in his name. Needs to be filtered out (separated by | symbol)
+
+OPTIONAL{
+{?link rdfs:label ?name}
+UNION
+{?link dbp:name ?name}
+}.
+FILTER (langMatches(lang(?name),"EN")).
+
+# return birthday (may be in <http://www.w3.org/2001/XMLSchema#gMonthDay> format)
+
+OPTIONAL {?link dbp:birthDate ?dob}.
+
+# return list of books written by the scientist
+
+OPTIONAL {?books dbp:author ?link}.
+
+# return list of doctoral students of the scientist
+
+OPTIONAL {
+{?link dbp:doctoralStudents ?students}
+UNION
+{?link dbo:doctoralStudent ?students}
+}.
+
+# return list of doctoral advisor of the scientist
+
+OPTIONAL {
+{?link dbp:doctoralAdvisor ?advisors}
+UNION
+{?link dbo:doctoralAdvisor ?advisors}
+UNION
+{?link dbp:doctoralAdvisors ?advisors}
+}.
+
+# return list of achievements of the scientist
+
+OPTIONAL {
+{?link dbo:knownFor ?impact}
+UNION
+{?link dbr:knownFor ?impact}.
+# Get the label of the achievement in plain text
+?impact rdfs:label ?impactlit.
+# Get the label in English
+FILTER (langMatches(lang(?impactlit),"EN")).
+}.
+
+# return the school from which the scientist graduated. NB: does not work with dbr:Boris_Cyrulnik. Needs to be filtered out
+
+OPTIONAL {
+{
+# Get all the ?school that are literal
+{?link dbo:almaMater ?school}
+UNION
+{?link dbp:almaMater ?school}
+UNION
+{?link dbp:education ?school}
+FILTER(isLiteral(?school) && langMatches(lang(?school),"EN"))
+}
+UNION
+{
+# UNION with the labels of all the URIs
+{?link dbo:almaMater ?s}
+UNION
+{?link dbp:almaMater ?s}
+UNION
+{?link dbp:education ?s}
+?s rdfs:label ?school
+FILTER(isLiteral(?school) && langMatches(lang(?school),"EN"))
+}
+}.
+
+# return the list of citizenships of the scientist
+
+OPTIONAL {?link dbp:citizenship ?citizenship}.
+
+# return the list of awards achieved by the scientist
+
+OPTIONAL {
+{
+# Get all the ?awards that are literal
+{?link dbp:awards ?awards}
+UNION
+{?link dbp:prizes ?awards}
+FILTER(isLiteral(?awards) && langMatches(lang(?awards),"EN"))
+}
+UNION
+{
+# UNION with the labels of all the URIs
+{?link dbp:awards ?a}
+UNION
+{?link dbp:prizes ?a}
+?a rdfs:label ?awards
+FILTER(isLiteral(?awards) && langMatches(lang(?awards),"EN"))
+}
+}.
+
+# return the list of domains that the scientist worked on
+
+OPTIONAL {
+{
+# Get all the ?field that are literal
+{?link dbp:field ?field}
+UNION
+{?link dbo:academicDiscipline ?field}
+UNION
+{?link dbo:mainInterest ?field}
+UNION
+{?link dbp:mainInterest ?field}
+FILTER(isLiteral(?field) && langMatches(lang(?field),"EN"))
+}
+UNION
+{
+# UNION with the labels of all the URIs
+{?link dbp:field ?f}
+UNION
+{?link dbo:academicDiscipline ?f}
+UNION
+{?link dbo:mainInterest ?f}
+UNION
+{?link dbp:mainInterest ?f}
+?f rdfs:label ?field
+FILTER(isLiteral(?field) && langMatches(lang(?field),"EN"))
+}
+}.
+
+# return the list of people who influenced the scientist
+
+OPTIONAL{
+{?link dbo:influencedBy ?influence}
+UNION
+{?influence dbo:influenced ?link}
+}.
+
+# return the list of people influenced by the scientist
+
+OPTIONAL{
+{?influenced dbo:influencedBy ?link}
+UNION
+{?link dbo:influenced ?influenced}
+}.
+
+# return the list of relatives of the scientist (may not be complete)
+
+OPTIONAL{
+{?relative dbo:relative ?link}
+UNION
+{?link dbo:relative ?relative}
+}.
+
+# return the spouse(s) of the scientist
+
+OPTIONAL{
+{?spouse dbo:spouse ?link}
+UNION
+{?link dbo:spouse ?spouse}
+}.
+
+# return the list of academic advisors to the scientist (not useful)
+
+OPTIONAL{?link dbp:academicAdvisors ?aadvisor}.
+
+# example of request to find a list of scientist in the same domain as Marie Curie
+
+SELECT DISTINCT ?link WHERE {
+dbr:List_of_French_scientists dbo:wikiPageWikiLink ?link.
+?link dbo:abstract ?desc.
+{{?link a dbo:Person}
+UNION
+{?link a yago:Scientist110560637}
+UNION
+{?link dct:subject dbc:French_scientists}}
+FILTER (langMatches(lang(?desc),"EN")).
+
+# Bound ?field to the field in which the scientist worked
+
+{{dbr:Marie_Curie dbp:field ?field}
+UNION
+{dbr:Marie_Curie dbo:academicDiscipline ?field}}.
+
+# Only take ?link with the same ?field as mentioned above
+
+{{?link dbp:field ?field}
+UNION
+{?link dbo:academicDiscipline ?field}}.
+
+# Filter out this link
+
+FILTER (?link != dbr:Marie_Curie)
+} ORDER BY asc(?link)
+
+# example of request to find a scientist if the user typed in "Marie René"
+
+SELECT DISTINCT ?link ?name WHERE {
+dbr:List_of_French_scientists dbo:wikiPageWikiLink ?link.
+?link dbo:abstract ?desc.
+{{?link a dbo:Person}
+UNION
+{?link a yago:Scientist110560637}
+UNION
+{?link dct:subject dbc:French_scientists}}
+FILTER (langMatches(lang(?desc),"EN")).
+OPTIONAL{
+{?link rdfs:label ?name}
+UNION
+{?link dbp:name ?name}
+}.
+FILTER (langMatches(lang(?name),"EN") && (regex(?name,"[Mm][Aa][Rr][Ii][Ee]") || regex(?name,"[Rr][Ee][Nn][Eé]"))).
+} ORDER BY asc(?link)
+
+# example finding the name of a domain
+
+SELECT DISTINCT ?name WHERE{
+dbr:Mathematics dbp:label ?name
+FILTER (langMatches(lang(?name),"EN"))
+}
+
+# example of finding the list of all scientists in the domain "physics"
+
+SELECT DISTINCT ?link WHERE {
+dbr:List_of_French_scientists dbo:wikiPageWikiLink ?link.
+?link dbo:abstract ?desc.
+{{?link a dbo:Person}
+UNION
+{?link a yago:Scientist110560637}
+UNION
+{?link dct:subject dbc:French_scientists}}
+FILTER (langMatches(lang(?desc),"EN")).
+
+{
+{?link dbp:field ?field}
+UNION
+{?link dbo:academicDiscipline ?field}
+UNION
+{?link dbo:mainInterest ?field}
+UNION
+{?link dbp:mainInterest ?field}
+}.
+
+{
+{?link dbp:field ?label}
+UNION
+{?link dbo:academicDiscipline ?label}
+UNION
+{?link dbo:mainInterest ?label}
+UNION
+{?link dbp:mainInterest ?label}
+UNION
+{?field rdfs:label ?label}
+}.
+FILTER(langMatches(lang(?label),"EN") && regex(?label,"[Pp][Hh][Yy][Ss][Ii][Cc][Ss]")).
+} ORDER BY asc(?link)
+
+# example of a common search (searching in the description)
+
+SELECT DISTINCT ?link WHERE {
+dbr:List_of_French_scientists dbo:wikiPageWikiLink ?link.
+?link dbo:abstract ?desc.
+{{?link a dbo:Person}
+UNION
+{?link a yago:Scientist110560637}
+UNION
+{?link dct:subject dbc:French_scientists}}
+FILTER (langMatches(lang(?desc),"EN")&&regex(?desc,"[Mm][Aa][Rr][Ii]")).
+} ORDER BY asc(?link)
